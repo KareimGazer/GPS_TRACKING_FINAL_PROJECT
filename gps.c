@@ -86,14 +86,168 @@ return 1;
 }
 
 
+float atof( char *str)
+{
+
+    sint32_t i,sum,total,index;
+    float res;
+    i=0;
+
+    while(str[i])
+    {
+
+        if(str[i]=='.')
+        {
+            index=i;
+            i++;
+            continue;
+
+        }
+        total=str[i]-48;
+        if(i==0)
+        {
+            sum=total;
+            i++;
+            continue;
+        }
+        sum=sum*10+total;
+        i++;
+    }
+
+    index=(strlength(str)-1)-index;
+
+    res=sum;
+    for(i=1;i<=index;i++)
+    {
+        res=(float)res/10;
+    }
+    return res;
+}
 
 
+void strrcpy( char* destination, const char* source)
+{
+    if (destination == '\0')
+    {
+        return ;
+    }
+ while (*source != '\0')
+    {
+        *destination = *source;
+        destination++;
+        source++;
+    }
+ *destination = '\0';
+ }
+void readGPSModule(volatile float* ftemp,volatile float* stemp)
+{
+	int u = 1;
+	int x = 0;
+	int checkNum = 0;
+	int counterNum = 0;
+	int start = 0;
+	
+	char bufferCheck[7] = { 0 };
+	char inputBuffer[50] = { 0 };
+	int found;
+	int k = 0;
+	int i;
+	char element;
+	while (u)
+	{
+		if (!x)
+		{
+			element = UART1_getByte();
+			if (element == '$')
+			{
+				if (counterNum > 0)
+				{int count = 0;
+					inputBuffer[counterNum] = '\0';
+					found = 0;
+					
+					while (inputBuffer[count] != '\0')
+					{
+						if (inputBuffer[count++] == 'A')
+							found = 1;
+					}
+					if (found)
+						x = 1;
+				}
+				
+				for ( i = 0; i < 7; i++)
+				{
+					bufferCheck[i] = '\0';
+				}
+				counterNum = 0;
+				checkNum = 0;
+			}
 
+			if (checkNum < 7)
+			{
+				bufferCheck[checkNum++] = element;
+			}
+			else if (checkNum >= 7)
+			{
 
+				if (bufferCheck[0] == '$' && bufferCheck[1] == 'G' && bufferCheck[2] == 'P' && bufferCheck[3] == 'G' && bufferCheck[4] == 'L' && bufferCheck[5] == 'L' && bufferCheck[6] == ',')
+				{
+					inputBuffer[counterNum++] = element;
+				}
+			}
+		}
 
+		else
+		{
+			int b = 0;
 
+			int i = 0;
+			int j = 0;
+			char firstnum[20] = { 0 };
+			char secondnum[20] = { 0 };
+			int startfirst = 1;
+			int startSecond = 0;
+			while (inputBuffer[b] != '\0')
+			{
 
+				if (startfirst)
+				{
+					if (inputBuffer[b] == ',' && inputBuffer[b + 1] == 'N' && inputBuffer[b + 2] == ',')
+					{
+						startfirst = 0;
+					}
+					else
+					{
+						firstnum[i++] = inputBuffer[b];
+					}
+				}
+				if (startSecond)
+				{
+					if (inputBuffer[b] == ',' && inputBuffer[b + 1] == 'E' && inputBuffer[b + 2] == ',')
+					{
+						startSecond = 0;
+					}
+					else
+					{
+						secondnum[j++] = inputBuffer[b];
+					}
+				}
+				if (b > 2)
+				{
+					if (inputBuffer[b] == ',' && inputBuffer[b - 1] == 'N' && inputBuffer[b - 2] == ',')
+					{
+						startSecond = 1;
+						j = 0;
+					}
+				}
+				b++;
+			}
 
+			*ftemp = atof(firstnum);
+			*stemp = atof(secondnum);
 
+			u = 0;
+		}
+	}
+}
 
 
